@@ -5,14 +5,17 @@ import math
 FPS = 60
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 900
+LUMINANCE_SCALE = 25            # greater the value more light on walls
+ONE_DEGREE_IN_RAD = 0.0174533   # pi / 180 
 HALF_SCREEN_HEIGHT = SCREEN_HEIGHT/2
 HALF_SCREEN_WIDTH = SCREEN_WIDTH/2
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Load and set the icon
 icon_path = os.path.join(script_dir, '..', 'assets', 'icon.png')
 icon = pg.image.load(icon_path)
 pg.display.set_icon(icon)
-
 
 # make sure that the whole map is covered by the wall(1)
 world_map = [
@@ -40,12 +43,12 @@ player_width = 10
 MAP_WIDTH = len(world_map[0])
 MAP_HEIGHT = len(world_map)
 
-FOV = math.pi / 3
-RAY_NUM = 500
+FOV = math.pi / 3   #Field of view
+RAY_NUM = 500       #Number of rays
 WALL_WIDTH = math.ceil(SCREEN_WIDTH / RAY_NUM)
 WALL_HEIGHT = SCREEN_HEIGHT/9
 
-mini_map_scale = 0.2
+mini_map_scale = 0.2    # Minimap size
 
 pg.init()
 screen = pg.display.set_mode((SCREEN_WIDTH + SCREEN_WIDTH/10, SCREEN_HEIGHT))
@@ -77,7 +80,7 @@ def collision_check(nx, ny):
     col, row = int(nx // TILE_WIDTH), int(ny // TILE_WIDTH)
     if world_map[row][col] == 1:
         return True  # Collision 
-    return False  # No collision
+    return False     # No collision
 
 def has_wall(x, y):
     if world_map[int(y//TILE_WIDTH)][int(x//TILE_WIDTH)] == 1:
@@ -148,11 +151,11 @@ def cast_ray():
         vt_hit_y = 0
 
         if facing_right:
-            ax = (px//TILE_WIDTH)*TILE_WIDTH + TILE_WIDTH
+            ax = (px // TILE_WIDTH) * TILE_WIDTH + TILE_WIDTH
         elif facing_left:
-            ax = (px//TILE_WIDTH)*TILE_WIDTH - 0.001
+            ax = (px // TILE_WIDTH) * TILE_WIDTH - 0.001
 
-        ay = py + (ax - px)*tan_a
+        ay = py + (ax - px) * tan_a
         
         nxt_vt_x = ax
         nxt_vt_y = ay  
@@ -162,7 +165,7 @@ def cast_ray():
         elif facing_left:
             xa = -TILE_WIDTH
 
-        ya = xa*tan_a
+        ya = xa * tan_a
 
         while (nxt_vt_x <= SCREEN_WIDTH and nxt_vt_x >=0 and nxt_vt_y <= SCREEN_HEIGHT and nxt_vt_y >=0):
             if has_wall(nxt_vt_x, nxt_vt_y):
@@ -179,21 +182,22 @@ def cast_ray():
             hz_distance = distance_calc(px, py, hz_hit_x, hz_hit_y)
         else: 
             hz_distance = 969
+
         if vt_wall_found:
             vt_distance = distance_calc(px, py, vt_hit_x, vt_hit_y)
         else: 
             vt_distance = 969
 
         if hz_distance >= vt_distance:
-            color=255
+            color = 255
         else:
-            color=160
+            color = 160
 
-        distance = min(vt_distance, hz_distance)*math.cos(pa + angle)
+        distance = min(vt_distance, hz_distance) * math.cos(pa + angle)
 
         proj_wall_height = WALL_HEIGHT/distance * (HALF_SCREEN_WIDTH/math.tan(FOV/2)) 
 
-        color = (1/distance) * 25000
+        color = 1 / distance * LUMINANCE_SCALE * 1000   # As the distance increases, the color get darker
         if color > 255:
             color = 255
         elif color < 0:
@@ -218,7 +222,7 @@ while running:
     screen.fill("#000000")
     screen.blit(bg, (0,0))
 
-    # RENDER YOUR GAME HERE
+    # RENDER 
     cast_ray()
     mini_map()
 
@@ -239,14 +243,14 @@ while running:
 
     # Handle rotation
     if keys[pg.K_a]:  # Rotate left
-        pa += 0.0174533 * rot_speed
+        pa += ONE_DEGREE_IN_RAD * rot_speed
     if keys[pg.K_d]:  # Rotate right
-        pa -= 0.0174533 * rot_speed
+        pa -= ONE_DEGREE_IN_RAD * rot_speed
 
     # Update Display
-    fps = int(clock.get_fps())
+    fps = int(clock.get_fps())   #get FPS
 
-    pg.display.set_caption(f"PyGame Raycaster - FPS: {fps}")
+    pg.display.set_caption(f"PyGame Raycaster - FPS: {fps}")    # set title with FPS
     pg.display.flip()
     clock.tick(FPS)  
 
